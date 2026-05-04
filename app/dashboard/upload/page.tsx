@@ -211,7 +211,7 @@ export default function UploadPage() {
           </div>
 
           {/* Tranzactii extrase (extras bancar) */}
-          {Array.isArray(extractedData.transactions) && (extractedData.transactions as unknown[]).length > 0 && (
+          {Array.isArray(extractedData.transactions) && (extractedData.transactions as unknown[]).length > 0 ? (
             <div>
               <p className="text-sm font-medium text-slate-700 mb-2">
                 {(extractedData.transactions as unknown[]).length} tranzacții identificate
@@ -231,7 +231,7 @@ export default function UploadPage() {
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Programator */}
           {extractedData.report_date && (
