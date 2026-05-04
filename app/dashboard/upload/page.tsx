@@ -18,7 +18,8 @@ export default function UploadPage() {
   const [docType, setDocType] = useState<DocType>("programator");
   const [step, setStep] = useState<Step>("select");
   const [progress, setProgress] = useState("");
-  const [extractedData, setExtractedData] = useState<Record<string, unknown> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [extractedData, setExtractedData] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState("");
   const [clinics, setClinics] = useState<Array<{id: string; name: string}>>([]);
   const [selectedClinic, setSelectedClinic] = useState("");
