@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 function LoginContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const error = searchParams.get("error");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
 
   const handleGoogleLogin = async () => {
     const supabase = createClient();
@@ -18,12 +25,41 @@ function LoginContent() {
     });
   };
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthError("");
+    const supabase = createClient();
+
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setAuthError("Verifică emailul pentru confirmare.");
+      }
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
-        {/* Logo / header */}
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19V7a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
@@ -33,12 +69,56 @@ function LoginContent() {
           <p className="text-sm text-slate-500 mt-1">Dr. Diana Gheorghiță</p>
         </div>
 
-        {error && (
+        {(error || authError) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-            Autentificare eșuată. Încearcă din nou.
+            {authError || "Autentificare eșuată. Încearcă din nou."}
           </div>
         )}
 
+        {/* Email/parolă */}
+        <form onSubmit={handleEmailAuth} className="space-y-3 mb-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="password"
+            placeholder="Parolă"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Se procesează..." : mode === "login" ? "Intră în cont" : "Creează cont"}
+          </button>
+        </form>
+
+        <button
+          onClick={() => setMode(mode === "login" ? "signup" : "login")}
+          className="w-full text-xs text-slate-400 hover:text-slate-600 mb-4 transition-colors"
+        >
+          {mode === "login" ? "Nu ai cont? Creează unul" : "Ai deja cont? Intră"}
+        </button>
+
+        <div className="relative mb-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-100" />
+          </div>
+          <div className="relative flex justify-center text-xs text-slate-400">
+            <span className="bg-white px-2">sau</span>
+          </div>
+        </div>
+
+        {/* Google OAuth */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 rounded-xl py-3 px-4 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
